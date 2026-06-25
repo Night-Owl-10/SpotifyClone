@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 import { toast } from "sonner";
 import { updateProfile, getUserById } from "@/services/authService";
-import { getSongsByUserId } from "@/services/musicService";
+import { getSongsByUserId, deleteMusic } from "@/services/musicService";
 
 type AvatarPreviewType = {
     url: string;
@@ -26,7 +26,7 @@ type AvatarPreviewType = {
 function Profile() {
 
     const { id } = useParams();
-    const { isAuthenticated, profile, signOut, setProfile } = useAuth();
+    const { isAuthenticated, profile, signOut, setProfile, musicRefresh, setMusicRefresh } = useAuth();
     const isOwnProfile = profile?.id === id;
     const navigate = useNavigate();
 
@@ -44,6 +44,7 @@ function Profile() {
         avatar_public_id: viewedUser?.avatar_public_id || "",
     });
     const [confirmDelete, setConfirmDelete] = useState("");
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
 
     useEffect(() => {
@@ -138,11 +139,38 @@ function Profile() {
             setMusic(music)
         }
         fetchMusic();
-    }, [id]);
+    }, [id, musicRefresh]);
 
     function handleDelete() {
 
         console.log("Account deletion confirmed");
+    }
+
+    async function handleDeleteMusic(
+        e: React.MouseEvent,
+        song: { id: string; thumbnail_public_id: string; music_public_id: string }
+    ) {
+        e.preventDefault(); // prevent Link navigation
+        e.stopPropagation();
+
+        if (deletingId) return; // already deleting another song
+
+        setDeletingId(song.id);
+        try {
+            await deleteMusic({
+                id: song.id,
+                thumbnail_public_id: song.thumbnail_public_id,
+                music_public_id: song.music_public_id,
+            });
+            setMusic((prev) => prev.filter((s) => s.id !== song.id));
+            setMusicRefresh(prev => !prev);
+            toast.success("Music deleted successfully");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to delete music. Please try again.");
+        } finally {
+            setDeletingId(null);
+        }
     }
 
     if (!isAuthenticated) {
@@ -185,12 +213,18 @@ function Profile() {
                             <div className="h-full w-full flex items-center justify-center bg-gray-200">
                                 <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
                             </div>
-                        ) : (
+                        ) : avatarPreview.url ? (
                             <img
                                 src={avatarPreview.url}
                                 className="h-full w-full object-cover"
                                 alt="Profile avatar"
                             />
+                        ) : (
+                            <div className="h-full w-full flex items-center justify-center bg-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                                </svg>
+                            </div>
                         )}
                         {isOwnProfile && <label
                             htmlFor="avatar-file"
@@ -337,8 +371,16 @@ function Profile() {
                                             <p className="text-xs md:text-sm line-clamp-1">{item.created_at.slice(0, 10)}</p>
                                         </div>
 
-                                        <button className=" flex justify-center items-center w-10 ml-auto cursor-pointer bg-red-900 hover:bg-red-700 rounded-md py-2">
-                                            <DeleteIcon className="w-4 h-4 text-white" />
+                                        <button
+                                            id={`delete-song-btn-${item.id}`}
+                                            className="flex justify-center items-center w-10 ml-auto cursor-pointer bg-red-900 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md py-2 transition-colors duration-200"
+                                            disabled={deletingId === item.id}
+                                            onClick={(e) => handleDeleteMusic(e, item)}
+                                            title="Delete song"
+                                        >
+                                            {deletingId === item.id
+                                                ? <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                                : <DeleteIcon className="w-4 h-4 text-white" />}
                                         </button>
                                     </div>
                                 </Link>
