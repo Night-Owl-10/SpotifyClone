@@ -118,9 +118,9 @@ function Music() {
                     </div>
                     <div className="flex items-center justify-between gap-4 mt-6 mb-4">
                         <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 rounded-full overflow-hidden">
+                            <Link to={`/profile/${song?.user_id}`} className="h-16 w-16 rounded-full overflow-hidden">
                                 <img src={song?.user?.avatar_url} className="h-full w-full object-cover" alt="" />
-                            </div>
+                            </Link>
                             <div className="flex gap-2">
                                 <span>{song?.title}</span>
                                 <span className="text-lg font-bold">.</span>

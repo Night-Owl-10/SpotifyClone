@@ -28,10 +28,19 @@ export const unlikeSong = async (userId: string, musicId: string) => {
 export const getAllLikedSongs = async (userId: string) => {
     const { data, error } = await supabase
         .from("liked_songs")
-        .select("*")
-        .eq("user_id", userId)
+        .select(`
+                    *,
+                    music:music_id (
+                        *,
+                        user:profiles!music_user_id_fkey (
+                        username,
+                        avatar_url
+                        )
+                    )
+                    `)
+        .eq("user_id", userId);
+    console.log(data)
 
     if (error) throw error;
-
     return data;
 };

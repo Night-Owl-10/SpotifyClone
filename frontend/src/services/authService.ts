@@ -11,7 +11,8 @@ export const signUp = async (
     username: string,
     email: string,
     password: string,
-    avatar: string
+    avatar: string,
+    avatarPublicId: string
 ) => {
     const { data, error } = await supabase.auth.signUp({
         email,
@@ -20,6 +21,7 @@ export const signUp = async (
             data: {
                 username,
                 avatar_url: avatar,
+                avatar_public_id: avatarPublicId,
             },
         },
     });
@@ -29,17 +31,6 @@ export const signUp = async (
     if (!data.user) {
         throw new Error("User not created");
     }
-
-    // const { error: profileError } = await supabase
-    //     .from("profiles")
-    //     .insert({
-    //         id: data.user.id,
-    //         email,
-    //         username,
-    //         avatar_url: avatar,
-    //     });
-
-    // if (profileError) throw profileError;
 
     console.log("USER:", data.user);
     console.log("SESSION:", data.session);
@@ -69,16 +60,30 @@ export const signIn = async (
 export const updateProfile = async (
     userId: string,
     username: string,
-    avatar_url: string
+    avatar_url: string,
+    avatar_public_id: string
 ) => {
     const { data, error } = await supabase
         .from("profiles")
         .update({
             username,
             avatar_url,
+            avatar_public_id
         })
         .eq("id", userId)
         .select()
+        .single();
+
+    if (error) throw error;
+
+    return data;
+};
+
+export const getUserById = async (id: string) => {
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", id)
         .single();
 
     if (error) throw error;

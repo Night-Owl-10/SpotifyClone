@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Edit, Check, Trash2, ArrowLeft, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Edit, Check, Trash2, ArrowLeft, Loader2, DeleteIcon } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import {
     Dialog,
@@ -11,27 +11,63 @@ import {
 } from "@/components/ui/dialog";
 import clsx from "clsx";
 import UploadDialog from "@/components/Upload";
-import { dummyData } from "@/utils/dummyData";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 import { toast } from "sonner";
-import { updateProfile } from "@/services/authService";
+import { updateProfile, getUserById } from "@/services/authService";
+import { getSongsByUserId } from "@/services/musicService";
 
+type AvatarPreviewType = {
+    url: string;
+    public_id: string;
+}
 
 function Profile() {
 
+    const { id } = useParams();
     const { isAuthenticated, profile, signOut, setProfile } = useAuth();
+    const isOwnProfile = profile?.id === id;
     const navigate = useNavigate();
 
+    const [viewedUser, setViewedUser] = useState(null);
     const [usernameEditing, setUsernameEditing] = useState(false);
-    const [avatarPreview, setAvatarPreview] = useState<string>(profile?.avatar_url || "");
+    const [avatarPreview, setAvatarPreview] = useState<AvatarPreviewType>({
+        url: viewedUser?.avatar_url || "",
+        public_id: viewedUser?.avatar_public_id || "",
+    });
     const [avatarLoading, setAvatarLoading] = useState(false);
+    const [music, setMusic] = useState([]);
     const [editedUser, setEditedUser] = useState({
-        username: profile?.username || "",
-        avatar: profile?.avatar_url || "",
+        username: viewedUser?.username || "",
+        avatar: viewedUser?.avatar_url || "",
+        avatar_public_id: viewedUser?.avatar_public_id || "",
     });
     const [confirmDelete, setConfirmDelete] = useState("");
+
+
+    useEffect(() => {
+        if (!id) return;
+
+        const fetchUser = async () => {
+            const user = await getUserById(id);
+            setViewedUser(user);
+        };
+
+        fetchUser();
+    }, [id]);
+
+    useEffect(() => {
+        if (!viewedUser) return;
+
+        setAvatarPreview({ url: viewedUser.avatar_url, public_id: viewedUser.avatar_public_id });
+
+        setEditedUser({
+            username: viewedUser.username,
+            avatar: viewedUser.avatar_url,
+            avatar_public_id: viewedUser.avatar_public_id,
+        });
+    }, [viewedUser]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         const { name, value } = e.target;
@@ -46,9 +82,16 @@ function Profile() {
         data.append("upload_preset", "multi-app");
         try {
             const response = await axios.post(`https://api.cloudinary.com/v1_1/dru7e6cnq/image/upload`, data)
-            const imageUrl = response.data.url
-            setAvatarPreview(imageUrl)
-            setEditedUser({ ...editedUser, avatar: imageUrl });
+            const avatar = {
+                url: response.data.secure_url,
+                public_id: response.data.public_id,
+            };
+            setAvatarPreview(avatar)
+            setEditedUser(prev => ({
+                ...prev,
+                avatar: avatar.url,
+                avatar_public_id: avatar.public_id,
+            }));
         } catch (error) {
             console.log(error);
             toast.error("Error uploading image");
@@ -64,11 +107,17 @@ function Profile() {
             return;
         }
 
+        console.log({
+            avatar: editedUser.avatar,
+            avatar_public_id: editedUser.avatar_public_id,
+        });
+
         try {
             const updatedProfile = await updateProfile(
                 profile!.id,
                 editedUser.username,
-                editedUser.avatar
+                editedUser.avatar,
+                editedUser.avatar_public_id
             );
 
             setProfile(updatedProfile);
@@ -79,6 +128,17 @@ function Profile() {
             toast.error("Failed to update profile");
         }
     }
+
+    useEffect(() => {
+        if (!id)
+            return
+        async function fetchMusic() {
+            const music = await getSongsByUserId(id)
+            console.log(music);
+            setMusic(music)
+        }
+        fetchMusic();
+    }, [id]);
 
     function handleDelete() {
 
@@ -101,9 +161,9 @@ function Profile() {
                     <ArrowLeft className="w-4 h-4" />
                     Back
                 </button>
-                <button onClick={signOut} className="w-20 bg-[#1db954] text-white px-1 py-1 rounded-md hover:bg-[#1ed760] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors duration-200">
+                {isOwnProfile && <button onClick={signOut} className="w-20 bg-[#1db954] text-white px-1 py-1 rounded-md hover:bg-[#1ed760] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors duration-200">
                     Sign Out
-                </button>
+                </button>}
             </div>
             {/* Page title */}
             <h1 className="text-3xl font-bold mb-4">Your Profile</h1>
@@ -127,12 +187,12 @@ function Profile() {
                             </div>
                         ) : (
                             <img
-                                src={avatarPreview}
+                                src={avatarPreview.url}
                                 className="h-full w-full object-cover"
                                 alt="Profile avatar"
                             />
                         )}
-                        <label
+                        {isOwnProfile && <label
                             htmlFor="avatar-file"
                             className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
                         >
@@ -144,14 +204,14 @@ function Profile() {
                                 onChange={handleImageChange}
                                 className="hidden"
                             />
-                        </label>
+                        </label>}
                     </div>
 
                     {/* User info */}
                     <div className="flex flex-col gap-4 items-center md:items-start">
                         {/* Username */}
                         <div className="flex items-center gap-2">
-                            {usernameEditing ? (
+                            {(usernameEditing && isOwnProfile) ? (
                                 <>
                                     <input
                                         id="username-input"
@@ -174,39 +234,39 @@ function Profile() {
                             ) : (
                                 <>
                                     <p className="text-xl font-semibold">{editedUser.username}</p>
-                                    <button
+                                    {isOwnProfile && <button
                                         id="username-edit-btn"
                                         type="button"
                                         className="cursor-pointer text-gray-500 hover:text-black transition-colors"
                                         onClick={() => setUsernameEditing(true)}
                                     >
                                         <Edit className="w-4 h-4" />
-                                    </button>
+                                    </button>}
                                 </>
                             )}
                         </div>
 
                         {/* Update button */}
-                        <button
+                        {isOwnProfile && <button
                             id="profile-update-btn"
                             type="submit"
                             className="w-28 bg-[#1db954] text-white px-4 py-2 rounded-md hover:bg-[#1ed760] focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors duration-200 self-center md:self-start"
                         >
                             Update
-                        </button>
+                        </button>}
                     </div>
                 </form>
 
                 {/* Delete Account — with confirmation dialog */}
                 <Dialog>
                     <DialogTrigger asChild>
-                        <button
+                        {isOwnProfile && <button
                             id="delete-account-trigger-btn"
                             className="w-[200px] bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors duration-200 flex justify-center items-center gap-2 mb-4 md:mb-0"
                         >
                             <Trash2 className="w-5 h-5" />
                             Delete Account
-                        </button>
+                        </button>}
                     </DialogTrigger>
 
                     <DialogContent className="w-[300px] xs:w-[400px] sm:w-fit bg-[#121212]">
@@ -264,18 +324,22 @@ function Profile() {
                 <UploadDialog />
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4">
                     {
-                        dummyData.length > 0 ? dummyData.map((item) => {
+                        music.length > 0 ? music.map((item) => {
                             return (
                                 <Link to={`/music/${item.id}`} key={item.id}>
                                     <div className="flex gap-2 bg-[#212121] border border-[#3b3b3b] rounded-lg cursor-pointer hover:bg-[#2f2f2f] transition-colors duration-200">
                                         <div className="h-16 w-16 rounded-lg overflow-hidden">
-                                            <img src={item.thumbnail} className="h-full w-full object-cover" alt="" />
+                                            <img src={item.thumbnail_url} className="h-full w-full object-cover" alt="" />
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <p className="text-xs md:text-sm">{item.artist}</p>
+                                            <p className="text-xs md:text-sm line-clamp-1">{item.title}</p>
                                             <p className="text-xs md:text-sm font-bold">.</p>
-                                            <p className="text-xs md:text-sm">{item.uploadedOn}</p>
+                                            <p className="text-xs md:text-sm line-clamp-1">{item.created_at.slice(0, 10)}</p>
                                         </div>
+
+                                        <button className=" flex justify-center items-center w-10 ml-auto cursor-pointer bg-red-900 hover:bg-red-700 rounded-md py-2">
+                                            <DeleteIcon className="w-4 h-4 text-white" />
+                                        </button>
                                     </div>
                                 </Link>
                             )

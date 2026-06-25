@@ -22,7 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/music/:id" element={<Music />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:id" element={<Profile />} />
           <Route path="/liked-music" element={<LikedMusic />} />
           <Route path="/playlist/:id" element={<PlayList />} />
         </Routes>

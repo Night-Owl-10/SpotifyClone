@@ -67,8 +67,17 @@ export const removeSongFromPlaylist = async (playlistId: string, musicId: string
 export const getPlaylistSongs = async (playlistId: string) => {
     const { data, error } = await supabase
         .from("playlist_songs")
-        .select("*")
-        .eq("playlist_id", playlistId)
+        .select(`
+            *,
+            music:music_id (
+                *,
+                user:profiles!music_user_id_fkey (
+                    username,
+                    avatar_url
+                )
+            )
+        `)
+        .eq("playlist_id", playlistId);
 
     if (error) throw error;
 

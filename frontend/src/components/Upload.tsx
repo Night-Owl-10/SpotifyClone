@@ -15,59 +15,49 @@ import { useAuth } from "@/hooks/useAuth";
 
 function UploadDialog() {
 
-    const { profile } = useAuth();
+    const { profile, setMusicRefresh } = useAuth();
 
-    const [musicFile, setMusicFile] = useState<string | null>(null);
-    const [musicFileName, setMusicFileName] = useState<File | null>(null);
+    const [musicFile, setMusicFile] = useState<File | null>(null);
     const [title, setTitle] = useState("");
-    const [thumbnailFile, setThumbnailFile] = useState<string | null>(null);
-    const [thumbnailFileName, setThumbnailFileName] = useState<File | null>(null);
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const musicInputRef = useRef<HTMLInputElement>(null);
     const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
-    async function handleMusicChange(e: React.ChangeEvent<HTMLInputElement>) {
-        // const file = e.target.files?.[0];
-        // if (!file) return;
-        // setMusicFile(file);
+    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, type: string) {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-        setLoading(true);
-        const img = e.target.files;
-        setMusicFileName(img?.[0] || null);
-        const data = new FormData();
-        data.append("file", img ? img[0] : "");
-        data.append("upload_preset", "multi-app");
-        try {
-            const response = await axios.post(`https://api.cloudinary.com/v1_1/dru7e6cnq/video/upload`, data)
-            const musicUrl = response.data.url
-            setMusicFile(musicUrl);
-        } catch (error) {
-            console.log(error);
-            toast.error("Error uploading music");
-        } finally {
-            setLoading(false);
+        if (type === "music") {
+            setMusicFile(file);
+        } else if (type === "thumbnail") {
+            setThumbnailFile(file);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setThumbnailPreview(e.target?.result);
+            }
+            reader.readAsDataURL(file);
         }
     }
 
-    async function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setLoading(true);
-        const img = e.target.files;
-        setThumbnailFileName(img?.[0] || null);
+    const uploadFile = async (file: File, type: string) => {
         const data = new FormData();
-        data.append("file", img ? img[0] : "");
+
+        data.append("file", file);
         data.append("upload_preset", "multi-app");
-        try {
-            const response = await axios.post(`https://api.cloudinary.com/v1_1/dru7e6cnq/image/upload`, data)
-            const imageUrl = response.data.url
-            setThumbnailFile(imageUrl);
-        } catch (error) {
-            console.log(error);
-            toast.error("Error uploading image");
-        } finally {
-            setLoading(false);
-        }
-    }
+
+        const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/dru7e6cnq/${type}/upload`,
+            data
+        );
+
+        return {
+            secure_url: response.data.secure_url,
+            public_id: response.data.public_id,
+        };
+    };
 
     function handleReset() {
         setMusicFile(null);
@@ -85,8 +75,19 @@ function UploadDialog() {
         }
         setLoading(true);
         try {
-            await uploadMusic(profile?.id, title, musicFile, thumbnailFile);
+
+            const musicUrl = await uploadFile(musicFile, "video");
+            const thumbnailUrl = await uploadFile(thumbnailFile, "image");
+
+            const secureMusicUrl = musicUrl.secure_url;
+            const publicMusicUrl = musicUrl.public_id;
+
+            const secureThumbnailUrl = thumbnailUrl.secure_url;
+            const publicThumbnailUrl = thumbnailUrl.public_id;
+
+            await uploadMusic(profile?.id, title, secureMusicUrl, publicMusicUrl, secureThumbnailUrl, publicThumbnailUrl);
             toast.success("Music uploaded successfully");
+            setMusicRefresh(prev => !prev);
             handleReset();
         } catch (error) {
             console.log(error);
@@ -145,21 +146,21 @@ function UploadDialog() {
                             className="flex items-center gap-3 w-full bg-[#1a1a1a] border border-[#3b3b3b] rounded-lg px-4 py-3 cursor-pointer hover:border-[#1db954] transition-colors duration-200 group"
                         >
                             <Music2 className="w-5 h-5 text-[#1db954] shrink-0" />
-                            <span className={`text-sm line-clamp-1 ${musicFile ? "text-white" : "text-gray-500"}`}>
-                                {musicFile ? musicFileName?.name : "Choose an audio file…"}
+                            <span className={`text-sm w-full truncate ${musicFile ? "text-white" : "text-gray-500"}`}>
+                                {musicFile ? musicFile.name : "Choose an audio file…"}
                             </span>
                             <input
                                 ref={musicInputRef}
                                 id="music-file-input"
                                 type="file"
                                 accept="audio/*"
-                                onChange={handleMusicChange}
+                                onChange={(e) => handleFileChange(e, "music")}
                                 className="hidden"
                             />
                         </div>
                         {musicFile && (
                             <p className="text-xs text-gray-500">
-                                {(musicFileName?.size / (1024 * 1024)).toFixed(2)} MB
+                                {(musicFile.size / (1024 * 1024)).toFixed(2)} MB
                             </p>
                         )}
                     </div>
@@ -190,7 +191,7 @@ function UploadDialog() {
                         >
                             {thumbnailFile ? (
                                 <img
-                                    src={thumbnailFile}
+                                    src={thumbnailPreview}
                                     alt="Thumbnail preview"
                                     className="h-10 w-10 rounded-md object-cover shrink-0"
                                 />
@@ -198,14 +199,14 @@ function UploadDialog() {
                                 <ImagePlus className="w-5 h-5 text-[#1db954] shrink-0" />
                             )}
                             <span className={`text-sm truncate ${thumbnailFile ? "text-white" : "text-gray-500"}`}>
-                                {thumbnailFile ? thumbnailFileName?.name : "Choose a thumbnail image…"}
+                                {thumbnailFile ? thumbnailFile.name : "Choose a thumbnail image…"}
                             </span>
                             <input
                                 ref={thumbnailInputRef}
                                 id="thumbnail-file-input"
                                 type="file"
                                 accept="image/*"
-                                onChange={handleThumbnailChange}
+                                onChange={(e) => handleFileChange(e, "thumbnail")}
                                 className="hidden"
                             />
                         </div>

@@ -21,12 +21,20 @@ interface SignUpProps {
     onSwitchToSignIn?: () => void;
 }
 
+type AvatarType = {
+    url: string;
+    public_id: string;
+}
+
 function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [avatar, setAvatar] = useState("https://res.cloudinary.com/dru7e6cnq/image/upload/v1781978010/profile_dxcsph1_vfhvyt.png");
+    const [avatar, setAvatar] = useState<AvatarType>({
+        url: "https://res.cloudinary.com/dru7e6cnq/image/upload/v1781978010/profile_dxcsph1_vfhvyt.png",
+        public_id: ""
+    });
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -38,8 +46,11 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
         data.append("upload_preset", "multi-app");
         try {
             const response = await axios.post(`https://api.cloudinary.com/v1_1/dru7e6cnq/image/upload`, data)
-            const imageUrl = response.data.url
-            setAvatar(imageUrl)
+            const avatar = {
+                url: response.data.secure_url,
+                public_id: response.data.public_id,
+            };
+            setAvatar(avatar)
         } catch (error) {
             console.log(error);
             toast.error("Error uploading image");
@@ -48,16 +59,19 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
         }
     };
 
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         console.log("Sign Up:", { username, email, password, avatar });
 
         try {
+
             await signUp(
                 username,
                 email,
                 password,
-                avatar
+                avatar.url,
+                avatar.public_id
             );
 
             toast.success("Account created");
@@ -157,7 +171,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
 
                         {/* Avatar preview */}
                         <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-800 bg-zinc-600 relative">
-                            <img src={avatar} className="h-full w-full object-cover" alt="Avatar preview" />
+                            <img src={avatar.url} className="h-full w-full object-cover" alt="Avatar preview" />
                             {loading && <Spinner className="size-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-zinc-400" />}
                         </div>
                     </div>

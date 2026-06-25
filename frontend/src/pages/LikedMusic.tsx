@@ -1,8 +1,52 @@
-import { dummyData } from "@/utils/dummyData";
 import { Link } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { Heart, Loader2, DeleteIcon } from "lucide-react";
+import { getAllLikedSongs, unlikeSong } from "@/services/likeService";
+import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 function LikedMusic() {
+    const { profile, playlistRefresh, setPlaylistRefresh } = useAuth();
+    const [likedSongs, setLikedSongs] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLikedSongs = async () => {
+            if (!profile?.id) return;
+
+            try {
+                const response = await getAllLikedSongs(profile.id);
+                setLikedSongs(response);
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLikedSongs();
+    }, [profile?.id, playlistRefresh]);
+
+    const handleUnlike = async (e: React.MouseEvent, songId: string) => {
+        try {
+            e.preventDefault();
+            e.stopPropagation();
+            await unlikeSong(profile?.id, songId);
+            toast.success("Song unliked successfully");
+            setPlaylistRefresh(prev => !prev);
+        } catch (error) {
+            console.log(error);
+            toast.error("Error unliking song");
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-white" />
+            </div>
+        );
+    }
+
     return (
         <section className="min-h-0 flex-1 overflow-y-auto">
             {/* Header banner — purple gradient to match the heart icon in the sidebar */}
@@ -20,14 +64,14 @@ function LikedMusic() {
                         Liked Music
                     </h1>
                     <p className="text-gray-300 text-sm mt-1">
-                        {dummyData.length} {dummyData.length === 1 ? "song" : "songs"}
+                        {likedSongs.length} {likedSongs.length === 1 ? "song" : "songs"}
                     </p>
                 </div>
             </div>
 
             {/* Song list */}
             <div className="px-8 py-6">
-                {dummyData.length === 0 ? (
+                {likedSongs.length === 0 ? (
                     /* Empty state */
                     <div className="flex flex-col items-center justify-center gap-4 py-20 text-gray-500">
                         <Heart className="w-12 h-12 opacity-30" />
@@ -47,13 +91,13 @@ function LikedMusic() {
                             <span>#</span>
                             <span>Title</span>
                             <span className="hidden md:block">Album</span>
-                            <span className="text-right">Duration</span>
+                            <span className="text-right">Delete</span>
                         </div>
 
-                        {dummyData.map((item, index) => (
+                        {likedSongs.map((song, index) => (
                             <Link
-                                to={`/music/${item.id}`}
-                                key={item.id}
+                                to={`/music/${song.music.id}`}
+                                key={song.music.id}
                                 className="grid grid-cols-[24px_1fr_1fr_80px] gap-4 px-4 py-3 rounded-md hover:bg-[#282828] transition-colors duration-150 group items-center"
                             >
                                 <span className="text-gray-400 text-sm group-hover:text-white">
@@ -63,24 +107,27 @@ function LikedMusic() {
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="h-10 w-10 rounded shrink-0 overflow-hidden">
                                         <img
-                                            src={item.thumbnail}
-                                            alt={item.name}
+                                            src={song.music.thumbnail_url}
+                                            alt={song.music.title}
                                             className="h-full w-full object-cover"
                                         />
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-white text-sm font-medium truncate">
-                                            {item.name}
+                                            {song.music.title}
                                         </p>
-                                        <p className="text-gray-400 text-xs truncate">{item.artist}</p>
+                                        <p className="text-gray-400 text-xs truncate">{song.music.user?.username}</p>
                                     </div>
                                 </div>
 
                                 <p className="text-gray-400 text-sm hidden md:block truncate">
-                                    {item.uploadedOn}
+                                    {song.music.created_at?.slice(0, 10)}
                                 </p>
 
-                                <p className="text-gray-400 text-sm text-right">—</p>
+
+                                <button className=" flex justify-center items-center w-16 ml-auto cursor-pointer bg-red-900 hover:bg-red-700 rounded-md py-2" onClick={(e) => handleUnlike(e, song.music.id)}>
+                                    <DeleteIcon className="w-4 h-4 text-white" />
+                                </button>
                             </Link>
                         ))}
                     </div>

@@ -1,19 +1,11 @@
-import { useParams } from "react-router-dom";
-import { dummyData } from "@/utils/dummyData";
-import { Link } from "react-router-dom";
-import { Music2 } from "lucide-react";
-
-// ---------------------------------------------------------------------------
-// Mock playlist data — keyed by the same IDs used in Sidebar.tsx
-// When the backend is ready, replace this with a fetch/API call using the id.
-// ---------------------------------------------------------------------------
-const mockPlaylists: Record<string, { name: string; songCount: number }> = {
-    "pl-001": { name: "Playlist 1", songCount: 0 },
-    "pl-002": { name: "Playlist 2", songCount: 0 },
-    "pl-003": { name: "Playlist 3", songCount: 0 },
-    "pl-004": { name: "Playlist 4", songCount: 0 },
-    "pl-005": { name: "Playlist 5", songCount: 0 },
-};
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Music2, DeleteIcon, Trash2 } from "lucide-react";
+import { getPlaylistSongs, removeSongFromPlaylist, deletePlaylist } from "@/services/playlistService";
+import { useState } from "react";
+import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 // ---------------------------------------------------------------------------
 // HOW THIS WORKS
@@ -31,9 +23,45 @@ const mockPlaylists: Record<string, { name: string; songCount: number }> = {
 
 function PlayList() {
     const { id } = useParams<{ id: string }>();
+    const [playlist, setPlaylist] = useState<any>(null);
+    const navigate = useNavigate();
 
-    // Look up this playlist in mock data (replace with API call later)
-    const playlist = id ? mockPlaylists[id] : undefined;
+    const { playlistRefresh, setPlaylistRefresh } = useAuth();
+
+    useEffect(() => {
+        if (!id) return;
+
+        async function fetchPlaylist() {
+            const playlist = await getPlaylistSongs(id)
+            setPlaylist(playlist)
+        }
+        fetchPlaylist();
+    }, [id, playlistRefresh]);
+
+    async function handleRemove(e: React.MouseEvent, songId: string) {
+        try {
+            e.preventDefault();
+            e.stopPropagation();
+            await removeSongFromPlaylist(id, songId);
+            toast.success("Song removed successfully");
+            setPlaylistRefresh(prev => !prev);
+        } catch (error) {
+            console.log(error);
+            toast.error("Error removing song");
+        }
+    }
+
+    async function handleDeletePlaylist() {
+        try {
+            await deletePlaylist(id);
+            toast.success("Playlist deleted successfully");
+            setPlaylistRefresh(prev => !prev);
+            navigate("/");
+        } catch (error) {
+            console.log(error);
+            toast.error("Error deleting playlist");
+        }
+    }
 
     if (!playlist) {
         return (
@@ -56,22 +84,28 @@ function PlayList() {
                     <Music2 className="w-20 h-20 text-gray-500" />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <p className="text-white text-xs font-semibold uppercase tracking-widest">
-                        Playlist
-                    </p>
-                    <h1 className="text-white text-4xl md:text-6xl font-extrabold leading-tight">
-                        {playlist.name}
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">
-                        {playlist.songCount} {playlist.songCount === 1 ? "song" : "songs"}
-                    </p>
+                <div className="flex justify-between items-center w-full">
+                    <div className="flex flex-col gap-2">
+                        <p className="text-white text-xs font-semibold uppercase tracking-widest">
+                            Playlist
+                        </p>
+                        <h1 className="text-white text-4xl md:text-6xl font-extrabold leading-tight">
+                            {playlist.name}
+                        </h1>
+                        <p className="text-gray-400 text-sm mt-1">
+                            {playlist.length} {playlist.length === 1 ? "song" : "songs"}
+                        </p>
+                    </div>
+                    <Button onClick={handleDeletePlaylist} className=" w-fit py-1 rounded-md bg-red-900 text-black hover:bg-red-700 hover:scale-105 transition-transform duration-200 cursor-pointer">
+                        <Trash2 className="w-4 h-4 text-white" />
+                        <span className="text-white">Delete Playlist</span>
+                    </Button>
                 </div>
             </div>
 
             {/* Song list */}
             <div className="px-8 py-6">
-                {dummyData.length === 0 ? (
+                {playlist.length === 0 ? (
                     /* Empty state */
                     <div className="flex flex-col items-center justify-center gap-4 py-20 text-gray-500">
                         <Music2 className="w-12 h-12 opacity-30" />
@@ -92,13 +126,13 @@ function PlayList() {
                             <span>#</span>
                             <span>Title</span>
                             <span className="hidden md:block">Album</span>
-                            <span className="text-right">Duration</span>
+                            <span className="text-right">Delete</span>
                         </div>
 
-                        {dummyData.map((item, index) => (
+                        {playlist.map((item, index) => (
                             <Link
-                                to={`/music/${item.id}`}
-                                key={item.id}
+                                to={`/music/${item.music.id}`}
+                                key={item.music.id}
                                 className="grid grid-cols-[24px_1fr_1fr_80px] gap-4 px-4 py-3 rounded-md hover:bg-[#282828] transition-colors duration-150 group items-center"
                             >
                                 <span className="text-gray-400 text-sm group-hover:text-white">
@@ -108,24 +142,26 @@ function PlayList() {
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="h-10 w-10 rounded shrink-0 overflow-hidden">
                                         <img
-                                            src={item.thumbnail}
-                                            alt={item.name}
+                                            src={item.music.thumbnail_url}
+                                            alt={item.music.title}
                                             className="h-full w-full object-cover"
                                         />
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-white text-sm font-medium truncate">
-                                            {item.name}
+                                            {item.music.title}
                                         </p>
-                                        <p className="text-gray-400 text-xs truncate">{item.artist}</p>
+                                        <p className="text-gray-400 text-xs truncate">{item.music.user?.username}</p>
                                     </div>
                                 </div>
 
                                 <p className="text-gray-400 text-sm hidden md:block truncate">
-                                    {item.uploadedOn}
+                                    {item.music.created_at?.slice(0, 10)}
                                 </p>
 
-                                <p className="text-gray-400 text-sm text-right">—</p>
+                                <button className=" flex justify-center items-center w-16 ml-auto cursor-pointer bg-red-900 hover:bg-red-700 rounded-md py-2" onClick={(e) => handleRemove(e, item.music.id)}>
+                                    <DeleteIcon className="w-4 h-4 text-white" />
+                                </button>
                             </Link>
                         ))}
                     </div>

@@ -53,7 +53,7 @@ export const getSongsByUserId = async (userId: string) => {
     return data;
 }
 
-export const uploadMusic = async (userId: string, title: string, musicUrl: string, thumbnailUrl: string) => {
+export const uploadMusic = async (userId: string, title: string, musicUrl: string, musicPublicId: string, thumbnailUrl: string, thumbnailPublicId: string) => {
     const { data, error } = await supabase
         .from("music")
         .insert({
@@ -61,6 +61,8 @@ export const uploadMusic = async (userId: string, title: string, musicUrl: strin
             title,
             music_url: musicUrl,
             thumbnail_url: thumbnailUrl,
+            thumbnail_public_id: thumbnailPublicId,
+            music_public_id: musicPublicId,
         });
 
     if (error) throw error;
