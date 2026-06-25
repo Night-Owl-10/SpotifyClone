@@ -15,7 +15,7 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 import { toast } from "sonner";
-import { updateProfile, getUserById } from "@/services/authService";
+import { updateProfile, getUserById, deleteAccount } from "@/services/authService";
 import { getSongsByUserId, deleteMusic } from "@/services/musicService";
 
 type AvatarPreviewType = {
@@ -45,6 +45,7 @@ function Profile() {
     });
     const [confirmDelete, setConfirmDelete] = useState("");
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [deletingAccount, setDeletingAccount] = useState(false);
 
 
     useEffect(() => {
@@ -141,9 +142,30 @@ function Profile() {
         fetchMusic();
     }, [id, musicRefresh]);
 
-    function handleDelete() {
+    async function handleDelete() {
+        if (!profile) return;
+        setDeletingAccount(true);
+        try {
+            // Collect all Cloudinary public IDs from uploaded songs
+            const uploads = music.map((song: { thumbnail_public_id?: string; music_public_id?: string }) => ({
+                thumbnail_public_id: song.thumbnail_public_id || null,
+                music_public_id: song.music_public_id || null,
+            }));
 
-        console.log("Account deletion confirmed");
+            await deleteAccount(
+                profile.id,
+                viewedUser?.avatar_public_id || null,
+                uploads
+            );
+
+            // Auth user is deleted — sign out the Supabase session and go home
+            await signOut();
+            navigate("/");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to delete account. Please try again.");
+            setDeletingAccount(false);
+        }
     }
 
     async function handleDeleteMusic(
@@ -320,27 +342,28 @@ function Profile() {
                         />
 
                         <div className="flex justify-center items-center gap-4">
-                            <DialogClose asChild>
-                                <button
-                                    id="delete-confirm-btn"
-                                    onClick={handleDelete}
-                                    disabled={confirmDelete !== "DELETE"}
-                                    className={clsx(
-                                        "w-[160px] text-white text-sm p-2 rounded-md transition-colors duration-200 flex justify-center items-center gap-2",
-                                        confirmDelete !== "DELETE"
-                                            ? "cursor-not-allowed bg-red-400/50"
-                                            : "bg-red-500 hover:bg-red-600"
-                                    )}
-                                >
-                                    <Trash2 className="w-4 h-4 hidden xs:block" />
-                                    Confirm Delete
-                                </button>
-                            </DialogClose>
+                            <button
+                                id="delete-confirm-btn"
+                                onClick={handleDelete}
+                                disabled={confirmDelete !== "DELETE" || deletingAccount}
+                                className={clsx(
+                                    "w-[160px] text-white text-sm p-2 rounded-md transition-colors duration-200 flex justify-center items-center gap-2",
+                                    confirmDelete !== "DELETE" || deletingAccount
+                                        ? "cursor-not-allowed bg-red-400/50"
+                                        : "bg-red-500 hover:bg-red-600"
+                                )}
+                            >
+                                {deletingAccount
+                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                    : <Trash2 className="w-4 h-4 hidden xs:block" />}
+                                {deletingAccount ? "Deleting..." : "Confirm Delete"}
+                            </button>
 
                             <DialogClose asChild>
                                 <button
                                     id="delete-cancel-btn"
-                                    className="w-[120px] bg-gray-500 text-white text-sm p-2 rounded-md hover:bg-gray-600 transition-colors duration-200"
+                                    disabled={deletingAccount}
+                                    className="w-[120px] bg-gray-500 text-white text-sm p-2 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     onClick={() => setConfirmDelete("")}
                                 >
                                     Cancel

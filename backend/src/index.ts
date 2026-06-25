@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 
 import deleteMusicRoutes from "./routes/deleteMusicRoutes";
+import deleteAccountRoutes from "./routes/deleteAccountRoutes";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.get("/api/health", (_req, res) => {
 
 // Routes
 app.use("/api", deleteMusicRoutes);
+app.use("/api", deleteAccountRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

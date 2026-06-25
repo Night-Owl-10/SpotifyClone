@@ -1,4 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export const signInWithGoogle = async () => {
     return await supabase.auth.signInWithOAuth({
@@ -90,3 +93,24 @@ export const getUserById = async (id: string) => {
 
     return data;
 };
+
+interface UploadedSong {
+    thumbnail_public_id?: string | null;
+    music_public_id?: string | null;
+}
+
+export const deleteAccount = async (
+    userId: string,
+    avatar_public_id: string | null | undefined,
+    uploads: UploadedSong[]
+): Promise<void> => {
+    const response = await axios.post(`${API_URL}/api/delete-account`, {
+        userId,
+        avatar_public_id: avatar_public_id || null,
+        uploads,
+    });
+
+    if (!response.data.success) {
+        throw new Error(response.data.error || "Failed to delete account");
+    }
+};
