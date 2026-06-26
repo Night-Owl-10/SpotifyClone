@@ -6,14 +6,14 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 function LikedMusic() {
-    const { profile, playlistRefresh, setPlaylistRefresh } = useAuth();
+    const { profile, playlistRefresh, setPlaylistRefresh, isAuthenticated } = useAuth();
     const [likedSongs, setLikedSongs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const fetchLikedSongs = async () => {
             if (!profile?.id) return;
-
+            setLoading(true);
             try {
                 const response = await getAllLikedSongs(profile.id);
                 setLikedSongs(response);
@@ -71,7 +71,13 @@ function LikedMusic() {
 
             {/* Song list */}
             <div className="px-8 py-6">
-                {likedSongs.length === 0 ? (
+                {!isAuthenticated ? (
+                    <div className="flex flex-col items-center justify-center gap-4 py-20 text-gray-500">
+                        <Heart className="w-12 h-12 opacity-30" />
+                        <p className="text-base font-semibold">You are not signed in</p>
+                        <p className="text-sm">Please sign in to see your liked songs.</p>
+                    </div>
+                ) : likedSongs.length === 0 ? (
                     /* Empty state */
                     <div className="flex flex-col items-center justify-center gap-4 py-20 text-gray-500">
                         <Heart className="w-12 h-12 opacity-30" />

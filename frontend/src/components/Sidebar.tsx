@@ -21,10 +21,15 @@ export function NavigationSidebar() {
 
     const [playlistName, setPlaylistName] = useState("");
     const [playlists, setPlaylists] = useState<any[]>([]);
-    const { profile, playlistRefresh, setPlaylistRefresh } = useAuth();
+    const { profile, playlistRefresh, setPlaylistRefresh, isAuthenticated } = useAuth();
 
     const handleCreatePlaylist = async (e) => {
         e.preventDefault();
+
+        if (!isAuthenticated) {
+            toast.error("Please signin to create a playlist");
+            return;
+        }
         if (!profile?.id || !playlistName) {
             toast.error("Please enter a playlist name");
             return;
@@ -42,7 +47,10 @@ export function NavigationSidebar() {
 
     useEffect(() => {
         const fetchPlaylists = async () => {
-            if (!profile?.id) return;
+            if (!profile?.id) {
+                setPlaylists([]);
+                return;
+            };
 
             const playlist = await getAllPlaylists(profile.id);
             setPlaylists(playlist);

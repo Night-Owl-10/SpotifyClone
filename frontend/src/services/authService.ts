@@ -94,23 +94,20 @@ export const getUserById = async (id: string) => {
     return data;
 };
 
-interface UploadedSong {
-    thumbnail_public_id?: string | null;
-    music_public_id?: string | null;
-}
-
 export const deleteAccount = async (
-    userId: string,
-    avatar_public_id: string | null | undefined,
-    uploads: UploadedSong[]
+    profileId: string,
+    accessToken: string
 ): Promise<void> => {
-    const response = await axios.post(`${API_URL}/api/delete-account`, {
-        userId,
-        avatar_public_id: avatar_public_id || null,
-        uploads,
-    });
+    // The backend authenticates the JWT, checks that user.id === profileId
+    // (so you can only delete your own account), then fetches all Cloudinary
+    // IDs from the DB, deletes assets, and finally deletes the auth user.
+    const response = await axios.post(
+        `${API_URL}/api/delete-account`,
+        { profileId },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
 
     if (!response.data.success) {
         throw new Error(response.data.error || "Failed to delete account");
     }
-};
+};

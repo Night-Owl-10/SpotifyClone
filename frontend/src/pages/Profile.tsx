@@ -26,7 +26,7 @@ type AvatarPreviewType = {
 function Profile() {
 
     const { id } = useParams();
-    const { isAuthenticated, profile, signOut, setProfile, musicRefresh, setMusicRefresh } = useAuth();
+    const { isAuthenticated, profile, session, signOut, setProfile, musicRefresh, setMusicRefresh } = useAuth();
     const isOwnProfile = profile?.id === id;
     const navigate = useNavigate();
 
@@ -104,19 +104,25 @@ function Profile() {
 
     async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+
+        // Server-side guard: Supabase RLS will also block this, but bail early
+        // so we never even attempt to update someone else's row.
+        if (!isOwnProfile) {
+            toast.error("You can only update your own profile.");
+            return;
+        }
+
         if (!editedUser.username.trim()) {
             toast.error("Username is required");
             return;
         }
 
-        console.log({
-            avatar: editedUser.avatar,
-            avatar_public_id: editedUser.avatar_public_id,
-        });
-
         try {
+            // Pass id (URL param) — not profile.id — so the Supabase RLS check
+            // targets the viewed profile's row. On someone else's page, id ≠
+            // auth.uid(), and RLS blocks the update as a server-side safety net.
             const updatedProfile = await updateProfile(
-                profile!.id,
+                id!,
                 editedUser.username,
                 editedUser.avatar,
                 editedUser.avatar_public_id
@@ -127,7 +133,7 @@ function Profile() {
             toast.success("Profile updated");
         } catch (error) {
             console.error(error);
-            toast.error("Failed to update profile");
+            toast.error(error instanceof Error ? error.message : "Failed to update profile");
         }
     }
 
@@ -143,47 +149,37 @@ function Profile() {
     }, [id, musicRefresh]);
 
     async function handleDelete() {
-        if (!profile) return;
+        if (!profile || !session?.access_token) return;
         setDeletingAccount(true);
         try {
-            // Collect all Cloudinary public IDs from uploaded songs
-            const uploads = music.map((song: { thumbnail_public_id?: string; music_public_id?: string }) => ({
-                thumbnail_public_id: song.thumbnail_public_id || null,
-                music_public_id: song.music_public_id || null,
-            }));
-
-            await deleteAccount(
-                profile.id,
-                viewedUser?.avatar_public_id || null,
-                uploads
-            );
+            await deleteAccount(id!, session.access_token);
 
             // Auth user is deleted — sign out the Supabase session and go home
             await signOut();
             navigate("/");
         } catch (error) {
             console.error(error);
-            toast.error("Failed to delete account. Please try again.");
+            toast.error(error instanceof Error ? error.message : "Failed to delete account. Please try again.");
             setDeletingAccount(false);
         }
     }
 
     async function handleDeleteMusic(
         e: React.MouseEvent,
-        song: { id: string; thumbnail_public_id: string; music_public_id: string }
+        song: { id: string }
     ) {
         e.preventDefault(); // prevent Link navigation
         e.stopPropagation();
 
         if (deletingId) return; // already deleting another song
+        if (!session?.access_token) {
+            toast.error("You must be logged in to delete music.");
+            return;
+        }
 
         setDeletingId(song.id);
         try {
-            await deleteMusic({
-                id: song.id,
-                thumbnail_public_id: song.thumbnail_public_id,
-                music_public_id: song.music_public_id,
-            });
+            await deleteMusic({ id: song.id }, session.access_token);
             setMusic((prev) => prev.filter((s) => s.id !== song.id));
             setMusicRefresh(prev => !prev);
             toast.success("Music deleted successfully");

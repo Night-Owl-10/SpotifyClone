@@ -73,29 +73,20 @@ export const uploadMusic = async (userId: string, title: string, musicUrl: strin
     return data;
 }
 
-interface DeleteMusicParams {
-    id: string;
-    thumbnail_public_id: string;
-    music_public_id: string;
-}
-
-export const deleteMusic = async ({ id, thumbnail_public_id, music_public_id }: DeleteMusicParams): Promise<void> => {
-    // Step 1: Delete both Cloudinary assets via the backend
-    // This MUST happen before the database row is deleted so we still have the public IDs.
-    const response = await axios.post(`${API_URL}/api/delete-music`, {
-        thumbnail_public_id,
-        music_public_id,
-    });
+export const deleteMusic = async (
+    { id }: { id: string },
+    accessToken: string
+): Promise<void> => {
+    // The backend authenticates the caller's JWT, verifies ownership,
+    // reads the Cloudinary IDs from the DB, deletes the assets, then
+    // deletes the row — all in a single authoritative request.
+    const response = await axios.post(
+        `${API_URL}/api/delete-music`,
+        { id },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
 
     if (!response.data.success) {
-        throw new Error(response.data.error || "Failed to delete from Cloudinary");
+        throw new Error(response.data.error || "Failed to delete music");
     }
-
-    // Step 2: Delete the row from Supabase (liked_songs and playlist_songs cascade automatically)
-    const { error } = await supabase
-        .from("music")
-        .delete()
-        .eq("id", id);
-
-    if (error) throw error;
-}
+}

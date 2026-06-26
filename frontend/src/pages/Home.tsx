@@ -16,7 +16,7 @@ function Home() {
     return (
         <section className="min-h-0 flex-1 overflow-y-auto p-[12px]">
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-                {
+                {songs.length > 0 &&
                     songs.map((song) => {
                         return (
                             <Link to={`/music/${song.id}`} key={song.id}>
@@ -25,12 +25,19 @@ function Home() {
                                         <img src={song.thumbnail_url} className="h-full w-full object-cover" alt="" />
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-full overflow-hidden">
-                                            <img src={song.user.avatar_url} className="h-full w-full object-cover" alt="" />
+                                        <div className="h-12 w-12 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center shrink-0">
+                                            {song.user?.avatar_url ? (
+                                                <img src={song.user.avatar_url} className="h-full w-full object-cover" alt="" />
+                                            ) : (
+                                                <span className="text-white text-lg font-bold uppercase">
+                                                    {song.title?.charAt(0) ?? "?"}
+                                                </span>
+                                            )}
                                         </div>
+
                                         <div>
                                             <h1>{song.title}</h1>
-                                            <p>{song.user.username}</p>
+                                            <p>{song.user?.username ?? "Unknown Artist"}</p>
                                             <p>{song.created_at?.slice(0, 10)}</p>
                                         </div>
 
