@@ -84,7 +84,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-[#121212] border border-zinc-700 text-white sm:max-w-md rounded-2xl shadow-2xl p-8">
+            <DialogContent className="bg-[#121212] border border-zinc-700 text-white sm:max-w-md rounded-2xl shadow-2xl p-4 sm:p-8 max-h-[90dvh] lg:max-h-none overflow-y-auto lg:overflow-visible">
                 <DialogHeader className="mb-2">
                     <div className="flex items-center gap-3 mb-1">
                         <div className="h-8 w-8 bg-[#1db954] rounded-full flex items-center justify-center shrink-0">
@@ -99,7 +99,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4 mt-1 sm:mt-2">
                     {/* Username */}
                     <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -111,7 +111,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                             onChange={(e) => setUsername(e.target.value)}
                             required
                             autoFocus
-                            className="pl-9 bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-500 focus-visible:ring-[#1db954] focus-visible:border-[#1db954] rounded-lg h-11"
+                            className="pl-9 bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-500 focus-visible:ring-[#1db954] focus-visible:border-[#1db954] rounded-lg h-9 sm:h-11"
                         />
                     </div>
 
@@ -125,7 +125,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="pl-9 bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-500 focus-visible:ring-[#1db954] focus-visible:border-[#1db954] rounded-lg h-11"
+                            className="pl-9 bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-500 focus-visible:ring-[#1db954] focus-visible:border-[#1db954] rounded-lg h-9 sm:h-11"
                         />
                     </div>
 
@@ -139,7 +139,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="pl-9 pr-10 bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-500 focus-visible:ring-[#1db954] focus-visible:border-[#1db954] rounded-lg h-11"
+                            className="pl-9 pr-10 bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-500 focus-visible:ring-[#1db954] focus-visible:border-[#1db954] rounded-lg h-9 sm:h-11"
                         />
                         <button
                             type="button"
@@ -151,7 +151,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                     </div>
 
                     {/* Avatar Upload */}
-                    <div className="flex flex-col items-center gap-3">
+                    <div className="flex flex-col items-center gap-2 sm:gap-3">
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
@@ -170,17 +170,17 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                         />
 
                         {/* Avatar preview */}
-                        <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-zinc-800 bg-zinc-600 relative">
+                        <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 border-zinc-800 bg-zinc-600 relative">
                             <img src={avatar.url} className="h-full w-full object-cover" alt="Avatar preview" />
                             {loading && <Spinner className="size-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-zinc-400" />}
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 mt-2">
+                    <div className="flex gap-3 mt-1 sm:mt-2">
                         <Button
                             type="submit"
-                            className="flex-1 bg-[#1db954] hover:bg-[#1ed760] text-black font-bold rounded-full h-11 text-base transition-all duration-200"
+                            className="flex-1 bg-[#1db954] hover:bg-[#1ed760] text-black font-bold rounded-full h-9 sm:h-11 text-sm sm:text-base transition-all duration-200"
                         >
                             Sign Up
                         </Button>
@@ -188,7 +188,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="flex-1 border-zinc-600 text-white bg-transparent hover:bg-zinc-700 hover:text-white rounded-full h-11 text-base"
+                                className="flex-1 border-zinc-600 text-white bg-transparent hover:bg-zinc-700 hover:text-white rounded-full h-9 sm:h-11 text-sm sm:text-base"
                             >
                                 Cancel
                             </Button>
@@ -197,7 +197,7 @@ function SignUp({ open, onOpenChange, onSwitchToSignIn }: SignUpProps) {
                 </form>
 
                 {/* OR divider */}
-                <div className="flex items-center gap-3 my-2">
+                <div className="flex items-center gap-3 my-1 sm:my-2">
                     <div className="flex-1 h-px bg-zinc-700" />
                     <span className="text-zinc-500 text-xs font-medium uppercase tracking-widest">or</span>
                     <div className="flex-1 h-px bg-zinc-700" />

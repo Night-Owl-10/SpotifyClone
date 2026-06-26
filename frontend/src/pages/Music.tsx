@@ -110,29 +110,44 @@ function Music() {
     }
 
     return (
-        <div className="h-[calc(100vh-130px)] flex">
-            <div className="h-full w-3/4 pt-16 flex justify-center border-r-2 border-zinc-800">
-                <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-700 h-fit w-fit">
-                    <div className="h-60 w-full rounded-xl overflow-hidden">
+        <div className="min-h-[calc(100vh-130px)] flex flex-col lg:flex-row">
+
+            {/* ── Main content ── */}
+            <div className="w-full lg:w-3/4 pt-8 sm:pt-12 lg:pt-16 flex justify-center items-start border-b-2 lg:border-b-0 lg:border-r-2 border-zinc-800 pb-8 lg:pb-0 px-4">
+                <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-700 w-full max-w-2xl">
+
+                    {/* Thumbnail */}
+                    <div className="h-48 sm:h-60 w-full rounded-xl overflow-hidden">
                         <img src={song?.thumbnail_url} className="h-full w-full object-cover" alt="" />
                     </div>
-                    <div className="flex items-center justify-between gap-4 mt-6 mb-4">
-                        <div className="flex items-center gap-4">
-                            <Link to={`/profile/${song?.user_id}`} className="h-16 w-16 rounded-full overflow-hidden">
+
+                    {/* Song meta + action buttons */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6 mb-4">
+
+                        {/* Avatar + title / artist / date */}
+                        <div className="flex items-center gap-3 min-w-0">
+                            <Link
+                                to={`/profile/${song?.user_id}`}
+                                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full overflow-hidden shrink-0"
+                            >
                                 <img src={song?.user?.avatar_url} className="h-full w-full object-cover" alt="" />
                             </Link>
-                            <div className="flex gap-2">
-                                <span>{song?.title}</span>
-                                <span className="text-lg font-bold">.</span>
-                                <span>{song?.user?.username}</span>
-                                <span className="text-lg font-bold">.</span>
-                                <span>{song?.created_at?.slice(0, 10)}</span>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                <span className="text-sm sm:text-base font-medium truncate">{song?.title}</span>
+                                <span className="font-bold hidden sm:inline">·</span>
+                                <span className="text-sm sm:text-base text-zinc-300">{song?.user?.username}</span>
+                                <span className="font-bold hidden sm:inline">·</span>
+                                <span className="text-sm sm:text-base text-zinc-400">{song?.created_at?.slice(0, 10)}</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        {/* Like + Add-to-playlist */}
+                        <div className="flex items-center gap-4 shrink-0">
                             {/* Like button */}
-                            <div className="bg-[#1db954] rounded-full h-8 w-8 flex items-center justify-center cursor-pointer" onClick={handleAddtoLiked}>
+                            <div
+                                className="bg-[#1db954] rounded-full h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-[#1ed760] transition-colors duration-200"
+                                onClick={handleAddtoLiked}
+                            >
                                 <Heart
                                     className="h-5 w-5 text-white hover:text-zinc-300 transition-all duration-300 hover:scale-120"
                                     strokeWidth={3}
@@ -190,41 +205,39 @@ function Music() {
                         </div>
                     </div>
 
+                    {/* Audio player — always full width of its card */}
                     <audio
                         src={song?.music_url}
                         controls
-                        className="w-[800px]"
+                        className="w-full"
                     />
                 </div>
             </div>
 
-            <div className="h-full w-1/4">
-                <div className="h-20 w-full flex items-center justify-center bg-[#535353]">
-                    <h1 className="text-xl font-bold">Artist Playlist</h1>
+            {/* ── Artist Playlist sidebar ── */}
+            <div className="w-full lg:w-1/4">
+                <div className="h-16 sm:h-20 w-full flex items-center justify-center bg-[#535353]">
+                    <h1 className="text-lg sm:text-xl font-bold">Artist Playlist</h1>
                 </div>
-                <div className="overflow-y-auto w-full h-[calc(100vh-120px)] flex flex-col gap-2 p-2">
-                    {
-                        userSongs.length > 0 ? userSongs.map((song) => {
-                            return (
-                                <Link to={`/music/${song.id}`} key={song.id}>
-                                    <div className="flex gap-2 bg-[#212121] border border-[#3b3b3b] rounded-lg cursor-pointer hover:bg-[#2f2f2f] transition-colors duration-200">
-                                        <div className="h-16 w-16 rounded-lg overflow-hidden">
-                                            <img src={song.thumbnail_url} className="h-full w-full object-cover" alt="" />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-xs md:text-sm">{song.title}</p>
-                                            <p className="text-xs md:text-sm font-bold">.</p>
-                                            <p className="text-xs md:text-sm">{song.created_at.slice(0, 10)}</p>
-                                        </div>
-                                    </div>
-                                </Link>
-                            )
-                        })
-                            : <div>
-                                This Artist has no other songs available
-                            </div>
-                    }
 
+                {/* Scrollable song list — fixed height on mobile, full remaining height on desktop */}
+                <div className="overflow-y-auto w-full h-64 sm:h-80 lg:h-[calc(100vh-120px)] flex flex-col gap-2 p-2">
+                    {userSongs.length > 0 ? userSongs.map((song) => (
+                        <Link to={`/music/${song.id}`} key={song.id}>
+                            <div className="flex gap-2 bg-[#212121] border border-[#3b3b3b] rounded-lg cursor-pointer hover:bg-[#2f2f2f] transition-colors duration-200 overflow-hidden">
+                                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-lg overflow-hidden shrink-0">
+                                    <img src={song.thumbnail_url} className="h-full w-full object-cover" alt="" />
+                                </div>
+                                <div className="flex items-center gap-1 min-w-0 overflow-hidden pr-2">
+                                    <p className="text-xs sm:text-sm truncate min-w-0">{song.title}</p>
+                                    <p className="text-xs sm:text-sm font-bold shrink-0">·</p>
+                                    <p className="text-xs sm:text-sm shrink-0 text-zinc-400">{song.created_at.slice(0, 10)}</p>
+                                </div>
+                            </div>
+                        </Link>
+                    )) : (
+                        <p className="text-sm text-zinc-400 p-2">This artist has no other songs available.</p>
+                    )}
                 </div>
             </div>
         </div>

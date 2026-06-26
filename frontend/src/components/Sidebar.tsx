@@ -1,6 +1,6 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Plus, Heart, Music, Book, ListMusic } from "lucide-react";
+import { Plus, Heart, Music, Book, ListMusic, LayoutDashboard } from "lucide-react";
 import { useSidebar } from "./ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -74,6 +74,24 @@ export function NavigationSidebar() {
                     </div>
                 </SidebarHeader>
                 <SidebarContent>
+                    <SidebarGroup>
+                        {/* Dashboard link — only shown when authenticated */}
+                        {isAuthenticated && (
+                            <Link
+                                to="/dashboard"
+                                className={cn("flex items-center justify-start gap-2 rounded-md cursor-pointer mb-2", state === "collapsed" ? "p-0" : "p-2 hover:bg-[#535353]")}
+                            >
+                                <div className="h-10 w-10 rounded-md overflow-hidden flex items-center justify-center bg-gradient-to-br from-[#1db954] to-emerald-700 shrink-0">
+                                    <LayoutDashboard className={cn("text-white", state === "collapsed" ? "h-4 w-4" : "h-5 w-5")} />
+                                </div>
+                                {state === "expanded" && (
+                                    <div className="flex flex-col items-start">
+                                        <p className="text-white text-base font-medium">Dashboard</p>
+                                    </div>
+                                )}
+                            </Link>
+                        )}
+                    </SidebarGroup>
                     <SidebarGroup>
                         <Dialog onOpenChange={(open) => { if (!open) setPlaylistName(""); }}>
                             <DialogTrigger asChild>
@@ -158,7 +176,7 @@ export function NavigationSidebar() {
                             {state === "expanded" && (
                                 <div className="flex flex-col items-start justify-around">
                                     <p className="text-white text-base">Liked Playlists</p>
-                                    <p className="text-white font-semibold text-base">0 Songs</p>
+                                    {/* <p className="text-white font-semibold text-base">0 Songs</p> */}
                                 </div>
                             )}
                         </Link>

@@ -390,7 +390,7 @@ function Profile() {
                                             <p className="text-xs md:text-sm line-clamp-1">{item.created_at.slice(0, 10)}</p>
                                         </div>
 
-                                        <button
+                                        {isOwnProfile && <button
                                             id={`delete-song-btn-${item.id}`}
                                             className="flex justify-center items-center w-10 ml-auto cursor-pointer bg-red-900 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md py-2 transition-colors duration-200"
                                             disabled={deletingId === item.id}
@@ -400,7 +400,7 @@ function Profile() {
                                             {deletingId === item.id
                                                 ? <Loader2 className="w-4 h-4 text-white animate-spin" />
                                                 : <DeleteIcon className="w-4 h-4 text-white" />}
-                                        </button>
+                                        </button>}
                                     </div>
                                 </Link>
                             )

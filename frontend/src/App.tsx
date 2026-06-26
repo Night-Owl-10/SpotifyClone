@@ -9,6 +9,7 @@ const Music = lazy(() => import('./pages/Music'))
 const Profile = lazy(() => import('./pages/Profile'))
 const LikedMusic = lazy(() => import('./pages/LikedMusic'))
 const PlayList = lazy(() => import('./pages/PlayList'))
+const UserDashboard = lazy(() => import('./pages/UserDashboard'))
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/profile/:id" element={<Profile />} />
           <Route path="/liked-music" element={<LikedMusic />} />
           <Route path="/playlist/:id" element={<PlayList />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
         </Routes>
       </Suspense>
     </Layout>

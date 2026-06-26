@@ -134,7 +134,7 @@ function UploadDialog() {
                 </div>
 
                 {/* Form body */}
-                <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-6 py-5">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-6 py-5 overflow-hidden">
 
                     {/* Upload Music File */}
                     <div className="flex flex-col gap-2">
@@ -143,10 +143,10 @@ function UploadDialog() {
                         </label>
                         <div
                             onClick={() => musicInputRef.current?.click()}
-                            className="flex items-center gap-3 w-full bg-[#1a1a1a] border border-[#3b3b3b] rounded-lg px-4 py-3 cursor-pointer hover:border-[#1db954] transition-colors duration-200 group"
+                            className="flex items-center gap-3 w-full overflow-hidden bg-[#1a1a1a] border border-[#3b3b3b] rounded-lg px-4 py-3 cursor-pointer hover:border-[#1db954] transition-colors duration-200 group"
                         >
                             <Music2 className="w-5 h-5 text-[#1db954] shrink-0" />
-                            <span className={`text-sm w-full truncate ${musicFile ? "text-white" : "text-gray-500"}`}>
+                            <span className={`text-sm min-w-0 flex-1 truncate ${musicFile ? "text-white" : "text-gray-500"}`}>
                                 {musicFile ? musicFile.name : "Choose an audio file…"}
                             </span>
                             <input
@@ -187,7 +187,7 @@ function UploadDialog() {
                         </label>
                         <div
                             onClick={() => thumbnailInputRef.current?.click()}
-                            className="flex items-center gap-3 w-full bg-[#1a1a1a] border border-[#3b3b3b] rounded-lg px-4 py-3 cursor-pointer hover:border-[#1db954] transition-colors duration-200"
+                            className="flex items-center gap-3 w-full overflow-hidden bg-[#1a1a1a] border border-[#3b3b3b] rounded-lg px-4 py-3 cursor-pointer hover:border-[#1db954] transition-colors duration-200"
                         >
                             {thumbnailFile ? (
                                 <img
@@ -198,7 +198,7 @@ function UploadDialog() {
                             ) : (
                                 <ImagePlus className="w-5 h-5 text-[#1db954] shrink-0" />
                             )}
-                            <span className={`text-sm truncate ${thumbnailFile ? "text-white" : "text-gray-500"}`}>
+                            <span className={`text-sm min-w-0 flex-1 truncate ${thumbnailFile ? "text-white" : "text-gray-500"}`}>
                                 {thumbnailFile ? thumbnailFile.name : "Choose a thumbnail image…"}
                             </span>
                             <input
