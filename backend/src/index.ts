@@ -6,7 +6,9 @@ import { v2 as cloudinary } from "cloudinary";
 import deleteMusicRoutes from "./routes/deleteMusicRoutes";
 import deleteAccountRoutes from "./routes/deleteAccountRoutes";
 
-dotenv.config();
+dotenv.config({
+    path: `.env.${process.env.NODE_ENV || "development"}`,
+});
 
 // Configure Cloudinary
 cloudinary.config({
