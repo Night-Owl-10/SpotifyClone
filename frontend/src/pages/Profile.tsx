@@ -17,6 +17,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { updateProfile, getUserById, deleteAccount } from "@/services/authService";
 import { getSongsByUserId, deleteMusic } from "@/services/musicService";
+import type { Song, UserProfile } from "@/types";
 
 type AvatarPreviewType = {
     url: string;
@@ -30,14 +31,14 @@ function Profile() {
     const isOwnProfile = profile?.id === id;
     const navigate = useNavigate();
 
-    const [viewedUser, setViewedUser] = useState(null);
+    const [viewedUser, setViewedUser] = useState<UserProfile | null>(null);
     const [usernameEditing, setUsernameEditing] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState<AvatarPreviewType>({
         url: viewedUser?.avatar_url || "",
         public_id: viewedUser?.avatar_public_id || "",
     });
     const [avatarLoading, setAvatarLoading] = useState(false);
-    const [music, setMusic] = useState([]);
+    const [music, setMusic] = useState<Song[]>([]);
     const [editedUser, setEditedUser] = useState({
         username: viewedUser?.username || "",
         avatar: viewedUser?.avatar_url || "",
@@ -138,10 +139,9 @@ function Profile() {
     }
 
     useEffect(() => {
-        if (!id)
-            return
+        if (!id) return;
         async function fetchMusic() {
-            const music = await getSongsByUserId(id)
+            const music = await getSongsByUserId(id!)
             console.log(music);
             setMusic(music)
         }
@@ -180,7 +180,7 @@ function Profile() {
         setDeletingId(song.id);
         try {
             await deleteMusic({ id: song.id }, session.access_token);
-            setMusic((prev) => prev.filter((s) => s.id !== song.id));
+            setMusic((prev) => prev.filter((s: Song) => s.id !== song.id));
             setMusicRefresh(prev => !prev);
             toast.success("Music deleted successfully");
         } catch (error) {

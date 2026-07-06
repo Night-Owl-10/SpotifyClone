@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { getAllSongs } from "@/services/musicService";
 import { useState, useEffect } from "react";
+import type { Song } from "@/types";
 
 function Home() {
 
-    const [songs, setSongs] = useState([]);
+    const [songs, setSongs] = useState<Song[]>([]);
     useEffect(() => {
         const getSongs = async () => {
             const songs = await getAllSongs();

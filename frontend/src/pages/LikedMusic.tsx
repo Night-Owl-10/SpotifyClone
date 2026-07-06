@@ -4,10 +4,11 @@ import { getAllLikedSongs, unlikeSong } from "@/services/likeService";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import type { LikedSong } from "@/types";
 
 function LikedMusic() {
     const { profile, playlistRefresh, setPlaylistRefresh, isAuthenticated } = useAuth();
-    const [likedSongs, setLikedSongs] = useState([]);
+    const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -30,7 +31,11 @@ function LikedMusic() {
         try {
             e.preventDefault();
             e.stopPropagation();
-            await unlikeSong(profile?.id, songId);
+            if (!profile?.id) {
+                toast.error("You must be signed in.");
+                return;
+            }
+            await unlikeSong(profile.id, songId);
             toast.success("Song unliked successfully");
             setPlaylistRefresh(prev => !prev);
         } catch (error) {

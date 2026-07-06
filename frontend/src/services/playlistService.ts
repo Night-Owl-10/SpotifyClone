@@ -1,4 +1,11 @@
 import { supabase } from "@/lib/supabase";
+import type { PlaylistSong } from "@/types";
+
+export type PlaylistData = {
+    id: string;
+    name: string;
+    songs: PlaylistSong[];
+};
 
 export const createPlaylist = async (userId: string, playlistName: string) => {
     const { data, error } = await supabase
@@ -82,4 +89,16 @@ export const getPlaylistSongs = async (playlistId: string) => {
     if (error) throw error;
 
     return data;
+};
+
+export const getPlaylist = async (playlistId: string): Promise<PlaylistData> => {
+    const [{ data: meta, error: metaError }, songs] = await Promise.all([
+        supabase.from("playlists").select("id, name").eq("id", playlistId).single(),
+        getPlaylistSongs(playlistId),
+    ]);
+
+    if (metaError) throw metaError;
+    if (!meta) throw new Error("Playlist not found");
+
+    return { id: meta.id, name: meta.name, songs: songs ?? [] };
 };

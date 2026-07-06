@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import type { Song } from "@/types";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,7 +28,7 @@ function Music() {
     const { id } = useParams();
     const { user, musicRefresh, setPlaylistRefresh } = useAuth();
 
-    const [song, setSong] = useState(null);
+    const [song, setSong] = useState<Song | null>(null);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [loadingPlaylists, setLoadingPlaylists] = useState(false);
     const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
@@ -93,7 +94,12 @@ function Music() {
 
     const handleAddtoLiked = async () => {
         try {
-            await likeSong(user?.id, id);
+            if (!user?.id) {
+                toast.error("You must be signed in to like songs.");
+                return;
+            }
+            if (!id) return;
+            await likeSong(user.id, id);
             toast.success("Added to liked songs", {
                 description: "Song successfully added to your liked songs.",
                 duration: 3000,

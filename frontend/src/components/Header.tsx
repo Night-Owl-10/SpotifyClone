@@ -43,7 +43,7 @@ function Header() {
                         >
                             Sign In
                         </Button> :
-                            <div className="h-8 w-8 md:h-12 md:w-12 rounded-full overflow-hidden flex justify-center items-center cursor-pointer" onClick={() => navigate(`/profile/${profile.id}`)}>
+                            <div className="h-8 w-8 md:h-12 md:w-12 rounded-full overflow-hidden flex justify-center items-center cursor-pointer" onClick={() => navigate(`/profile/${profile?.id}`)}>
                                 <img src={profile?.avatar_url} className="h-full w-full object-cover" alt="Profile picture" />
                             </div>
                         }

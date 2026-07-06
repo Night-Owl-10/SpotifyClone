@@ -16,14 +16,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { createPlaylist, getAllPlaylists } from "@/services/playlistService";
 import { toast } from "sonner";
 
+type Playlist = {
+    id: string;
+    name: string;
+    playlist_songs?: { count: number }[];
+};
+
 export function NavigationSidebar() {
 
 
     const [playlistName, setPlaylistName] = useState("");
-    const [playlists, setPlaylists] = useState<any[]>([]);
+    const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const { profile, playlistRefresh, setPlaylistRefresh, isAuthenticated } = useAuth();
 
-    const handleCreatePlaylist = async (e) => {
+    const handleCreatePlaylist = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (!isAuthenticated) {

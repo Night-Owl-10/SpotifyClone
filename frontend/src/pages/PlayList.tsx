@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Music2, DeleteIcon, Trash2 } from "lucide-react";
-import { getPlaylistSongs, removeSongFromPlaylist, deletePlaylist } from "@/services/playlistService";
+import { getPlaylist, removeSongFromPlaylist, deletePlaylist } from "@/services/playlistService";
+import type { PlaylistData } from "@/services/playlistService";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,7 +24,7 @@ import { Button } from "@/components/ui/button";
 
 function PlayList() {
     const { id } = useParams<{ id: string }>();
-    const [playlist, setPlaylist] = useState<any>(null);
+    const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
     const navigate = useNavigate();
 
     const { playlistRefresh, setPlaylistRefresh } = useAuth();
@@ -32,8 +33,8 @@ function PlayList() {
         if (!id) return;
 
         async function fetchPlaylist() {
-            const playlist = await getPlaylistSongs(id)
-            setPlaylist(playlist)
+            const data = await getPlaylist(id!);
+            setPlaylist(data);
         }
         fetchPlaylist();
     }, [id, playlistRefresh]);
@@ -42,7 +43,7 @@ function PlayList() {
         try {
             e.preventDefault();
             e.stopPropagation();
-            await removeSongFromPlaylist(id, songId);
+            await removeSongFromPlaylist(id!, songId);
             toast.success("Song removed successfully");
             setPlaylistRefresh(prev => !prev);
         } catch (error) {
@@ -53,7 +54,7 @@ function PlayList() {
 
     async function handleDeletePlaylist() {
         try {
-            await deletePlaylist(id);
+            await deletePlaylist(id!);
             toast.success("Playlist deleted successfully");
             setPlaylistRefresh(prev => !prev);
             navigate("/");
@@ -91,7 +92,7 @@ function PlayList() {
                             {playlist.name}
                         </h1>
                         <p className="text-gray-400 text-sm mt-1">
-                            {playlist.length} {playlist.length === 1 ? "song" : "songs"}
+                            {playlist.songs.length} {playlist.songs.length === 1 ? "song" : "songs"}
                         </p>
                     </div>
                     <Button onClick={handleDeletePlaylist} className="shrink-0 w-fit py-1 rounded-md bg-red-900 text-black hover:bg-red-700 hover:scale-105 transition-transform duration-200 cursor-pointer">
@@ -103,7 +104,7 @@ function PlayList() {
 
             {/* Song list */}
             <div className="px-4 sm:px-8 py-6">
-                {playlist.length === 0 ? (
+                {playlist.songs.length === 0 ? (
                     /* Empty state */
                     <div className="flex flex-col items-center justify-center gap-4 py-20 text-gray-500">
                         <Music2 className="w-12 h-12 opacity-30" />
@@ -126,7 +127,7 @@ function PlayList() {
                             <span className="text-right">Delete</span>
                         </div>
 
-                        {playlist.map((item, index) => (
+                        {playlist.songs.map((item, index) => (
                             <Link
                                 to={`/music/${item.music.id}`}
                                 key={item.music.id}

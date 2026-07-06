@@ -20,7 +20,7 @@ function UploadDialog() {
     const [musicFile, setMusicFile] = useState<File | null>(null);
     const [title, setTitle] = useState("");
     const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-    const [thumbnailPreview, setThumbnailPreview] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     const musicInputRef = useRef<HTMLInputElement>(null);
@@ -36,7 +36,10 @@ function UploadDialog() {
             setThumbnailFile(file);
             const reader = new FileReader();
             reader.onload = (e) => {
-                setThumbnailPreview(e.target?.result);
+                const result = e.target?.result;
+                if (typeof result === "string") {
+                    setThumbnailPreview(result);
+                }
             }
             reader.readAsDataURL(file);
         }
@@ -85,7 +88,11 @@ function UploadDialog() {
             const secureThumbnailUrl = thumbnailUrl.secure_url;
             const publicThumbnailUrl = thumbnailUrl.public_id;
 
-            await uploadMusic(profile?.id, title, secureMusicUrl, publicMusicUrl, secureThumbnailUrl, publicThumbnailUrl);
+            if (!profile?.id) {
+                toast.error("You must be signed in to upload music.");
+                return;
+            }
+            await uploadMusic(profile.id, title, secureMusicUrl, publicMusicUrl, secureThumbnailUrl, publicThumbnailUrl);
             toast.success("Music uploaded successfully");
             setMusicRefresh(prev => !prev);
             handleReset();
@@ -191,7 +198,7 @@ function UploadDialog() {
                         >
                             {thumbnailFile ? (
                                 <img
-                                    src={thumbnailPreview}
+                                    src={thumbnailPreview ?? undefined}
                                     alt="Thumbnail preview"
                                     className="h-10 w-10 rounded-md object-cover shrink-0"
                                 />
